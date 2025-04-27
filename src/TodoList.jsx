@@ -1,11 +1,23 @@
 import { useState } from "react";
 
-const AddTodo = () => {
+const AddTodo = ( { addTodo }) => {
+
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      const input = event.target;
+      const text = input.value.trim();
+      if (text) {
+        addTodo(text);
+        input.value = "";
+      }
+    }
+  }
+
   return (
     <input
       type="text"
-      id="new-todo"
       placeholder="Adicione aqui sua nova tarefa"
+      onKeyDown={handleKeyPress}
     />
   );
 };
@@ -26,7 +38,13 @@ const TodoFilter = () => {
   );
 };
 
-const TodoItem = ({ todo }) => {
+const TodoItem = ({ todo, markTodoAsDone }) => {
+  
+  const handleClick = () => {
+    markTodoAsDone(todo.id);
+  }
+
+  
   return (
     <>
       {todo.done ? (
@@ -34,7 +52,7 @@ const TodoItem = ({ todo }) => {
       ) : (
         <li>
           {todo.text}
-          <button>Concluir</button>
+          <button onClick={handleClick}>Concluir</button>
         </li>
       )}
     </>
@@ -42,7 +60,20 @@ const TodoItem = ({ todo }) => {
 };
 
 const TodoList = () => {
-  const [todos, setTodos] = useState([{ text: "Learn React", done: false }, { text: "Learn JS", done: true }]);
+  const [todos, setTodos] = useState([{id: crypto.randomUUID(), text: "Learn React", done: false }, {id: crypto.randomUUID(), text: "Learn JS", done: true }]);
+
+  const addTodo = (text) => {
+    const newTodo = { id: crypto.randomUUID(), text, done: false };
+    setTodos((prevTodos) => [...prevTodos, newTodo]);
+  }
+
+  const markTodoAsDone = (id) => {
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) =>
+        todo.id === id ? { ...todo, done: true } : todo
+      )
+    );
+  }
 
 
   return (
@@ -53,10 +84,10 @@ const TodoList = () => {
         SPODWE2
       </div>
       <TodoFilter />
-      <AddTodo />
+      <AddTodo addTodo={addTodo} />
       <ul id="todo-list">
         {todos.map((todo, index) => (
-          <TodoItem key={index} todo={todo} />
+          <TodoItem key={index} todo={todo} markTodoAsDone={markTodoAsDone} />
         ))}
       </ul>
     </>
