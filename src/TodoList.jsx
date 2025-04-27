@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 const AddTodo = () => {
   return (
     <input
@@ -40,6 +42,9 @@ const TodoItem = ({ todo }) => {
 };
 
 const TodoList = () => {
+  const [todos, setTodos] = useState([{ text: "Learn React", done: false }, { text: "Learn JS", done: true }]);
+
+
   return (
     <>
       <h1>Todo List</h1>
@@ -50,8 +55,9 @@ const TodoList = () => {
       <TodoFilter />
       <AddTodo />
       <ul id="todo-list">
-        <TodoItem todo={{ text: "Learn React", done: false }} />
-        <TodoItem todo={{ text: "Learn JS", done: true }} />
+        {todos.map((todo, index) => (
+          <TodoItem key={index} todo={todo} />
+        ))}
       </ul>
     </>
   );
