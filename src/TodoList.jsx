@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const AddTodo = ({ addTodo }) => {
   const handleKeyPress = (event) => {
@@ -62,25 +62,68 @@ const TodoItem = ({ todo, markTodoAsDone }) => {
 };
 
 const TodoList = () => {
-  const [todos, setTodos] = useState([
-    { id: crypto.randomUUID(), text: "Learn React", done: false },
-    { id: crypto.randomUUID(), text: "Learn JS", done: true },
-  ]);
+  const [todos, setTodos] = useState([]);
   const [filter, setFilter] = useState("all");
   const shouldRender = filter === "pending" ? false : true;
   const viewAll = filter === "all";
 
-  const addTodo = (text) => {
-    const newTodo = { id: crypto.randomUUID(), text, done: false };
-    setTodos((prevTodos) => [...prevTodos, newTodo]);
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/todos");
+        if (!response.ok) {
+          throw new Error("Erro ao buscar os dados");
+        }
+        const data = await response.json();
+        setTodos(data);
+      } catch (error) {
+        console.error("Erro ao buscar os dados:", error);
+      }
+    };
+
+    fetchTodos();
+  }, []);
+
+  const addTodo = async (text) => {
+    const newTodoData = { text };
+    try {
+      const response = await fetch("http://localhost:3000/todos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTodoData),
+      });
+      if (!response.ok) {
+        throw new Error("Erro ao adicionar o todo");
+      }
+      const addedTodo = await response.json();
+      setTodos((prevTodos) => [...prevTodos, addedTodo]);
+    } catch (error) {
+      console.error("Erro ao adicionar o todo:", error);
+    }
   };
 
-  const markTodoAsDone = (id) => {
-    setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === id ? { ...todo, done: true } : todo
-      )
-    );
+  const markTodoAsDone = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/todos/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ done: true }),
+      });
+      if (!response.ok) {
+        throw new Error("Erro ao marcar o todo como concluído");
+      }
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) =>
+          todo.id === id ? { ...todo, done: true } : todo
+        )
+      );
+    } catch (error) {
+      console.error("Erro ao marcar o todo como concluído:", error);
+    }
   };
 
   return (
@@ -93,13 +136,13 @@ const TodoList = () => {
       <AddTodo addTodo={addTodo} />
       <ul id="todo-list">
         {viewAll
-          ? todos.map((todo, index) => (
-              <TodoItem key={index} todo={todo} markTodoAsDone={markTodoAsDone} />
+          ? todos.map((todo) => (
+              <TodoItem key={todo.id} todo={todo} markTodoAsDone={markTodoAsDone} />
             ))
           : todos
               .filter((n) => n.done === shouldRender)
-              .map((todo, index) => (
-                <TodoItem key={index} todo={todo} markTodoAsDone={markTodoAsDone} />
+              .map((todo) => (
+                <TodoItem key={todo.id} todo={todo} markTodoAsDone={markTodoAsDone} />
               ))}
       </ul>
     </>
